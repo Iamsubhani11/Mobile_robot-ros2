@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!-- Parallel-jaw rack-and-pinion gripper, designed in tools/make_gripper.py. Meshes are in frame F:
+     origin on the servo shaft, x along the shaft, y across the jaws, z up the gripper.
+     Closing moves each jaw inward by gear_r * gripper_joint, so the gap between the pads is 56 mm - 2 * that. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="gear_r" value="0.0125"/>
+  <xacro:property name="grip_q_max" value="2.2"/>
+  <xacro:property name="tcp_fx" value="-0.0145"/>
+  <xacro:property name="tcp_fz" value="-0.0922"/>
+  <xacro:property name="pad_fx" value="-0.0145"/>
+  <xacro:property name="pad_fz" value="-0.081"/>
+
+  <xacro:macro name="grip_visual" params="mesh material rgba">
+    <visual><origin rpy="0 ${grip_pitch} 0"/>
+      <geometry><mesh filename="package://amr_description/meshes/gripper/${mesh}.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="${material}"><color rgba="${rgba}"/></material></visual>
+  </xacro:macro>
+  <xacro:macro name="grip_inertial" params="mass">
+    <inertial><mass value="${mass}"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial>
+  </xacro:macro>
+
+  <xacro:macro name="jaw" params="side finger rack pad sign">
+    <link name="gripper_finger_${side}">
+      <xacro:grip_inertial mass="0.025"/>
+      <xacro:grip_visual mesh="${finger}" material="amr_accent" rgba="0.08 0.27 0.50 1"/>
+      <xacro:grip_visual mesh="${pad}" material="amr_pad" rgba="0.05 0.05 0.06 1"/>
+      <xacro:grip_visual mesh="${rack}" material="amr_gear" rgba="0.18 0.19 0.20 1"/>
+      <collision name="gripper_finger_${side}_pad">
+        <origin xyz="${pad_fx * cos(grip_pitch) + pad_fz * sin(grip_pitch)} ${sign * 0.02925} ${-pad_fx * sin(grip_pitch) + pad_fz * cos(grip_pitch)}" rpy="0 ${grip_pitch} 0"/>
+        <geometry><box size="0.015 0.0025 0.026"/></geometry></collision>
+    </link>
+    <joint name="gripper_finger_${side}_joint" type="prismatic">
+      <parent link="arm_wrist"/><child link="gripper_finger_${side}"/>
+      <origin xyz="${grip_x} ${grip_y} ${grip_z}"/><axis xyz="0 ${-sign} 0"/>
+      <limit lower="${-grip_margin * gear_r}" upper="${(grip_q_max + grip_margin) * gear_r}" effort="30" velocity="0.05"/>
+      <dynamics damping="0.5" friction="0.01"/>
+      <mimic joint="gripper_joint" multiplier="${gear_r}" offset="0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="amr_gripper">
+    <link name="gripper_base">
+      <xacro:grip_inertial mass="0.04"/>
+      <xacro:grip_visual mesh="base" material="amr_gear" rgba="0.18 0.19 0.20 1"/>
+      <xacro:grip_visual mesh="cover" material="amr_gear" rgba="0.18 0.19 0.20 1"/>
+    </link>
+    <joint name="gripper_base_joint" type="fixed"><parent link="arm_wrist"/><child link="gripper_base"/>
+      <origin xyz="${grip_x} ${grip_y} ${grip_z}"/></joint>
+
+    <link name="gripper_pinion">
+      <xacro:grip_inertial mass="0.01"/>
+      <xacro:grip_visual mesh="pinion" material="amr_gear" rgba="0.18 0.19 0.20 1"/>
+    </link>
+    <joint name="gripper_joint" type="revolute"><parent link="arm_wrist"/><child link="gripper_pinion"/>
+      <origin xyz="${grip_x} ${grip_y} ${grip_z}"/>
+      <axis xyz="${-cos(grip_pitch)} 0 ${sin(grip_pitch)}"/>
+      <limit lower="${-grip_margin}" upper="${grip_q_max + grip_margin}" effort="1.0" velocity="1.5"/>
+      <dynamics damping="0.02" friction="0.01"/></joint>
+
+    <xacro:jaw side="left" finger="finger_left" rack="rack_lower" pad="pad_left" sign="1"/>
+    <xacro:jaw side="right" finger="finger_right" rack="rack_upper" pad="pad_right" sign="-1"/>
+
+    <link name="gripper_tcp"/>
+    <joint name="gripper_tcp_joint" type="fixed"><parent link="arm_wrist"/><child link="gripper_tcp"/>
+      <origin xyz="${grip_x + tcp_fx * cos(grip_pitch) + tcp_fz * sin(grip_pitch)} ${grip_y} ${grip_z - tcp_fx * sin(grip_pitch) + tcp_fz * cos(grip_pitch)}"/></joint>
+  </xacro:macro>
+</robot>

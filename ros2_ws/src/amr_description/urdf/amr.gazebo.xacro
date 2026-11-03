@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+  <xacro:macro name="position_joint" params="name">
+    <joint name="${name}">
+      <command_interface name="position"/>
+      <state_interface name="position"/><state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+  <xacro:macro name="mimic_joint" params="name multiplier">
+    <joint name="${name}">
+      <param name="mimic">gripper_joint</param>
+      <param name="multiplier">${multiplier}</param>
+      <command_interface name="position"/>
+      <state_interface name="position"/><state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+  <xacro:macro name="velocity_joint" params="name">
+    <joint name="${name}">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/><state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="amr_gazebo" params="namespace controllers">
+
+    <ros2_control name="amr_gazebo" type="system">
+      <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+      <xacro:velocity_joint name="front_left_wheel_joint"/>
+      <xacro:velocity_joint name="front_right_wheel_joint"/>
+      <xacro:velocity_joint name="rear_left_wheel_joint"/>
+      <xacro:velocity_joint name="rear_right_wheel_joint"/>
+      <xacro:position_joint name="arm_waist_joint"/>
+      <xacro:position_joint name="arm_shoulder_joint"/>
+      <xacro:position_joint name="arm_elbow_joint"/>
+      <xacro:position_joint name="arm_wrist_joint"/>
+      <xacro:position_joint name="gripper_joint"/>
+      <xacro:mimic_joint name="gripper_finger_left_joint" multiplier="0.0125"/>
+      <xacro:mimic_joint name="gripper_finger_right_joint" multiplier="0.0125"/>
+    </ros2_control>
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers}</parameters>
+        <xacro:unless value="${namespace == ''}">
+          <ros><namespace>${namespace}</namespace></ros>
+        </xacro:unless>
+      </plugin>
+      <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+        <odom_frame>odom</odom_frame>
+        <robot_base_frame>base_link</robot_base_frame>
+        <odom_topic>/gz/ground_truth/odom</odom_topic>
+        <dimensions>3</dimensions>
+        <odom_publish_frequency>30</odom_publish_frequency>
+      </plugin>
+    </gazebo>
+
+    <!-- YDLIDAR X2: 360 deg, 0.10-8 m, ~7 Hz, ~430 samples per turn -->
+    <gazebo reference="lidar_link">
+      <sensor name="lidar" type="gpu_lidar">
+        <topic>/gz/scan</topic>
+        <gz_frame_id>lidar_link</gz_frame_id>
+        <update_rate>7</update_rate>
+        <always_on>1</always_on>
+        <visualize>false</visualize>
+        <lidar>
+          <scan><horizontal><samples>430</samples><resolution>1</resolution>
+            <min_angle>-3.14159</min_angle><max_angle>3.14159</max_angle></horizontal></scan>
+          <range><min>0.10</min><max>8.0</max><resolution>0.01</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.01</stddev></noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+
+    <!-- Pi Camera v2 style: 62 deg horizontal FOV -->
+    <gazebo reference="camera_link">
+      <sensor name="camera" type="camera">
+        <topic>/gz/camera/image_raw</topic>
+        <gz_frame_id>camera_optical_frame</gz_frame_id>
+        <update_rate>15</update_rate>
+        <always_on>1</always_on>
+        <camera>
+          <camera_info_topic>/gz/camera/camera_info</camera_info_topic>
+          <horizontal_fov>1.085</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.02</near><far>30</far></clip>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

@@ -1,0 +1,29 @@
+# Shared by simulation and the real robot, so the twin behaves the same on both.
+/**:
+  ros__parameters:
+    # measured from the CAD (tools/cad_report.json)
+    wheel_radius: 0.02442
+    half_wheelbase: 0.0825     # front/rear axle to centre, m
+    half_track: 0.1319         # wheel centre to centre line, m
+    max_wheel_speed: 25.0      # rad/s; set to your motor's real no-load speed
+    linear_speed: 0.30         # teleop m/s
+    angular_speed: 1.0         # teleop rad/s
+    accel_limit: 1.0           # m/s^2 ramp on the base command
+    cmd_timeout: 0.5           # stop if /cmd_vel goes quiet, s
+    arm_speed: 0.8             # teleop rad/s on each arm joint
+    gripper_speed: 1.2
+    # joystick numbering: standard Xbox layout. Check yours with: ros2 topic echo /joy
+    axis_lx: 0
+    axis_ly: 1
+    axis_lt: 2
+    axis_rx: 3
+    axis_ry: 4
+    axis_rt: 5
+    axis_dx: 6
+    axis_dy: 7
+    btn_a: 0
+    btn_b: 1
+    btn_x: 2
+    btn_y: 3
+    btn_lb: 4
+    btn_rb: 5

@@ -1,0 +1,83 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Tool Properties
+    Name: Tool Properties
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Reference Frame: odom
+      Cell Size: 0.5
+      Plane Cell Count: 20
+    - Class: rviz_default_plugins/Map
+      Name: Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Durability Policy: Transient Local
+    - Class: rviz_default_plugins/Map
+      Name: Costmap
+      Enabled: false
+      Color Scheme: costmap
+      Topic:
+        Value: /global_costmap/costmap
+    - Class: rviz_default_plugins/Path
+      Name: Planned path
+      Enabled: true
+      Topic:
+        Value: /plan
+    - Class: rviz_default_plugins/RobotModel
+      Name: Robot
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+    - Class: rviz_default_plugins/LaserScan
+      Name: Lidar
+      Enabled: true
+      Topic:
+        Value: /scan
+        Reliability Policy: Best Effort
+      Size (m): 0.025
+      Style: Flat Squares
+      Color Transformer: FlatColor
+      Color: 230; 70; 40
+    - Class: rviz_default_plugins/LaserScan
+      Name: Twin lidar (Gazebo)
+      Enabled: true
+      Topic:
+        Value: /sim/scan
+        Reliability Policy: Best Effort
+      Size (m): 0.02
+      Style: Flat Squares
+      Color Transformer: FlatColor
+      Color: 60; 200; 120
+    - Class: rviz_default_plugins/Image
+      Name: Twin camera (Gazebo)
+      Enabled: true
+      Topic:
+        Value: /sim/camera/image_raw
+    - Class: rviz_default_plugins/Image
+      Name: Camera
+      Enabled: true
+      Topic:
+        Value: /object/debug_image
+  Global Options:
+    Fixed Frame: odom
+    Background Color: 38; 41; 48
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Value: /goal_pose
+    - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.5
+      Pitch: 0.7
+      Yaw: 3.6
+      Focal Point: {X: 0.2, Y: 0.0, Z: 0.1}

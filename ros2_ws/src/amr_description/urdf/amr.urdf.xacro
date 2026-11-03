@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<!-- Mobile Base 1 + 4-DOF robotic arm + gripper, with YDLIDAR X2 and a base camera.
+     sim:=true   adds the Gazebo Harmonic parts (see amr.gazebo.xacro)
+     sim:=false  plain URDF for RViz or the real robot -->
+<robot name="amr" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+  <xacro:arg name="sim" default="false"/>
+  <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="controllers" default=""/>
+  <xacro:property name="is_sim" value="$(arg sim)"/>
+  <!-- Gazebo only: a gripper joint resting exactly on its hard limit can stick and ignore commands.
+       The margin keeps the simulated stops just past the 0 to 0.72 rad range that ArmModel.clamp allows. -->
+  <xacro:property name="grip_margin" value="${0.03 if str(is_sim).lower() == 'true' else 0.0}"/>
+
+  <xacro:include filename="$(find amr_description)/urdf/generated/amr_cad.xacro"/>
+  <xacro:include filename="$(find amr_description)/urdf/gripper.xacro"/>
+
+  <!-- 2 left + 2 right wheels, in the X roller pattern -->
+  <xacro:macro name="mecanum_wheel" params="name x y z radius mass width">
+    <link name="${name}_wheel">
+      <inertial><mass value="${mass}"/>
+        <inertia ixx="${mass*(3*radius*radius+width*width)/12}" ixy="0" ixz="0"
+                 iyy="${mass*radius*radius/2}" iyz="0" izz="${mass*(3*radius*radius+width*width)/12}"/>
+      </inertial>
+      <visual><geometry><mesh filename="package://amr_description/meshes/visual/wheel_${name}__hub.stl"/></geometry>
+        <material name="amr_hub"><color rgba="0.18 0.19 0.20 1"/></material></visual>
+      <visual><geometry><mesh filename="package://amr_description/meshes/visual/wheel_${name}__roller.stl"/></geometry>
+        <material name="amr_roller"><color rgba="1.00 0.78 0.05 1"/></material></visual>
+      <!-- a sphere rolls cleanly. Gazebo adds roller friction to it: see amr_gazebo/launch/robot_sdf.py -->
+      <collision name="${name}_wheel"><geometry><sphere radius="${radius}"/></geometry></collision>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/><child link="${name}_wheel"/>
+      <origin xyz="${x} ${y} ${z}"/><axis xyz="0 1 0"/>
+      <limit effort="3.0" velocity="25.0"/><dynamics damping="0.01" friction="0.01"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:amr_cad_body/>
+  <xacro:amr_gripper/>
+  <xacro:amr_cad_wheels/>
+
+  <!-- ===== sensors ===== -->
+  <xacro:property name="lidar_x" value="0.100"/>
+  <xacro:property name="camera_x" value="0.1375"/>
+
+  <link name="lidar_mount">
+    <inertial><origin xyz="0 0 0.012"/><mass value="0.03"/><inertia ixx="2e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="3e-5"/></inertial>
+    <visual><geometry><mesh filename="package://amr_description/meshes/mounts/lidar_mount.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_mount"><color rgba="0.18 0.19 0.20 1"/></material></visual>
+  </link>
+  <joint name="lidar_mount_joint" type="fixed"><parent link="base_link"/><child link="lidar_mount"/>
+    <origin xyz="${lidar_x} 0 ${deck_z}"/></joint>
+
+  <!-- lidar_link origin is the scan plane: 18 mm mount + 32 mm to the optical centre -->
+  <link name="lidar_link">
+    <inertial><mass value="0.19"/><inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4"/></inertial>
+    <visual><origin xyz="0 0 -0.032"/><geometry><mesh filename="package://amr_description/meshes/mounts/lidar_body.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_black"><color rgba="0.05 0.05 0.06 1"/></material></visual>
+    <collision><origin xyz="0 0 -0.013"/><geometry><cylinder radius="0.035" length="0.038"/></geometry></collision>
+  </link>
+  <joint name="lidar_joint" type="fixed"><parent link="lidar_mount"/><child link="lidar_link"/>
+    <origin xyz="0 0 0.050"/></joint>
+
+  <link name="camera_mount">
+    <inertial><origin xyz="0 0 0.01"/><mass value="0.015"/><inertia ixx="3e-6" ixy="0" ixz="0" iyy="3e-6" iyz="0" izz="3e-6"/></inertial>
+    <visual><geometry><mesh filename="package://amr_description/meshes/mounts/camera_mount.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_mount"><color rgba="0.18 0.19 0.20 1"/></material></visual>
+  </link>
+  <joint name="camera_mount_joint" type="fixed"><parent link="base_link"/><child link="camera_mount"/>
+    <origin xyz="${camera_x} 0 ${deck_z}"/></joint>
+
+  <!-- camera_link: x along the lens, tilted 15 degrees down -->
+  <link name="camera_link">
+    <inertial><mass value="0.02"/><inertia ixx="2e-6" ixy="0" ixz="0" iyy="2e-6" iyz="0" izz="2e-6"/></inertial>
+    <visual><origin xyz="-0.0045 0 0"/><geometry><mesh filename="package://amr_description/meshes/mounts/camera_body.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_black"><color rgba="0.05 0.05 0.06 1"/></material></visual>
+  </link>
+  <joint name="camera_joint" type="fixed"><parent link="camera_mount"/><child link="camera_link"/>
+    <origin xyz="0.0065 0 0.020" rpy="0 ${radians(15)} 0"/></joint>
+  <link name="camera_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed"><parent link="camera_link"/><child link="camera_optical_frame"/>
+    <origin rpy="${-pi/2} 0 ${-pi/2}"/></joint>
+
+  <!-- Front-face branding: visual only, meshes are in the base_link frame (make_mounts.py) -->
+  <link name="branding">
+    <inertial><mass value="0.001"/><inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/></inertial>
+    <visual><geometry><mesh filename="package://amr_description/meshes/mounts/brand_name.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_brand_blue"><color rgba="0.08 0.27 0.50 1"/></material></visual>
+    <visual><geometry><mesh filename="package://amr_description/meshes/mounts/brand_author.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="amr_brand_dark"><color rgba="0.18 0.19 0.20 1"/></material></visual>
+  </link>
+  <joint name="branding_joint" type="fixed"><parent link="base_link"/><child link="branding"/></joint>
+
+  <xacro:if value="${is_sim}">
+    <xacro:include filename="$(find amr_description)/urdf/amr.gazebo.xacro"/>
+    <xacro:amr_gazebo namespace="$(arg namespace)" controllers="$(arg controllers)"/>
+  </xacro:if>
+</robot>
