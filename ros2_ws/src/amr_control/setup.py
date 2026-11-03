@@ -7,7 +7,7 @@ setup(
                 ('share/' + package, ['package.xml']),
                 ('share/' + package + '/config', glob('config/*.yaml')),
                 ('share/' + package + '/launch', glob('launch/*.py'))],
-    install_requires=['setuptools'], zip_safe=True, maintainer='hemanthros', license='Apache-2.0',
+    install_requires=['setuptools'], zip_safe=True, maintainer='hemanthros', license='MIT',
     entry_points={'console_scripts': [
         'mecanum_kinematics = amr_control.mecanum_kinematics:main',
         'keyboard_teleop = amr_control.keyboard_teleop:main',

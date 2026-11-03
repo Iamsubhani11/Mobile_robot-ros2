@@ -4,7 +4,7 @@
   <version>1.0.0</version>
   <description>Gazebo Harmonic world, controllers and launch files for the AMR.</description>
   <maintainer email="shaiksubhani525@gmail.com">hemanthros</maintainer>
-  <license>Apache-2.0</license>
+  <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>amr_description</exec_depend>
   <exec_depend>amr_control</exec_depend>

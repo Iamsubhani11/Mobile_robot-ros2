@@ -153,3 +153,7 @@ Firmware, from `firmware/test`:
 g++ -std=c++17 -I. -I../amr_firmware -x c++ sil_main.cpp -o /tmp/fw_sil -lm
 python3 run_sil.py /tmp/fw_sil /tmp/fw.log
 ```
+
+## License
+
+MIT License. See [LICENSE](LICENSE).

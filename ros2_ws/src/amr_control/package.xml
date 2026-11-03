@@ -4,7 +4,7 @@
   <version>1.0.0</version>
   <description>Mecanum kinematics, keyboard and joystick teleop, hardware bridge and digital twin sync.</description>
   <maintainer email="shaiksubhani525@gmail.com">hemanthros</maintainer>
-  <license>Apache-2.0</license>
+  <license>MIT</license>
   <depend>rclpy</depend><depend>sensor_msgs</depend><depend>geometry_msgs</depend><depend>nav_msgs</depend>
   <depend>std_msgs</depend><depend>trajectory_msgs</depend><depend>tf2_ros</depend>
   <depend>nav2_msgs</depend><depend>cv_bridge</depend><exec_depend>joy</exec_depend><exec_depend>python3-serial</exec_depend>
